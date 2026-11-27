@@ -9,7 +9,7 @@ AI agent skills for extracting, auditing, and reconciling student organization f
 | Skill | Purpose | Use When |
 | :--- | :--- | :--- |
 | [`skills/callink-finance`](skills/callink-finance/SKILL.md) | **Extract & Normalize** | Reading live CalLink balances, encumbrances, paginated transactions, Purchase Requests, or parsing CSV/TSV/screenshot exports. |
-| [`skills/budget-reconcile`](skills/budget-reconcile/SKILL.md) | **Categorize & Reconcile** | Diffing CalLink activity against a local Budget-vs-Actuals workbook, confirming categories, previewing impact, and auditing totals. |
+| [`skills/budget-reconcile`](skills/budget-reconcile/SKILL.md) | **Categorize & Reconcile** | Diffing CalLink activity against a Budget-vs-Actuals workbook (includes an anonymized [sample_budget.xlsx](skills/budget-reconcile/examples/sample_budget.xlsx), generator, and audit script). |
 
 Keeping them separate lets any organization use `callink-finance` standalone (regardless of where they track their budget) or pair both skills together.
 

@@ -15,7 +15,7 @@ Follow this 4-step interactive workflow whenever reconciling transactions, grant
 ## Step 1: Audit Current Workbook & Identify Delta
 
 1. **Inspect Existing Ledger:**
-   - Run the workspace's audit script (if present, e.g., `python3 scripts/audit_ledger.py`) or inspect the ledger tab to capture:
+   - Run the audit script (e.g., `python3 ./scripts/audit_ledger.py path/to/workbook.xlsx`, tested against [examples/sample_budget.xlsx](./examples/sample_budget.xlsx)) or inspect the ledger tab to capture:
      - Existing transaction IDs (`REC-xxx`), payment references (`CalLinks #...`), and amounts.
      - Current approved net budgets and spent-so-far totals per category.
      - Recorded top-line bank/account KPIs (`Account Balance`, `Encumbered`, `Available Cash`).
@@ -60,7 +60,7 @@ After user approval:
    - Add/update ledger rows and refresh top-line cash KPIs (`Account Balance`, `Encumbered`, `Available Cash`, `Grant Receivables`).
    - Update version history / `Last Updated` metadata.
 2. **Regenerate & Audit:**
-   - Run the workbook generator (if code-driven) and post-build audit script.
+   - Run the workbook generator (see [scripts/generate_sample_workbook.py](./scripts/generate_sample_workbook.py) for a clean template) and [scripts/audit_ledger.py](./scripts/audit_ledger.py).
    - Verify **zero unmapped variance** (`Dashboard Total Net Spend == Ledger Total Net Spend`) and tie net ledger spend back to opening cash + inflows - outflows - encumbrances.
 3. **Sync Docs:**
    - Update the workspace `README.md` (if present) with the latest balances and version summary.
