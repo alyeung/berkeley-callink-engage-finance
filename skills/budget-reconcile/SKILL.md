@@ -43,7 +43,7 @@ Before modifying any spreadsheet or script:
 ## Step 3: Preview Proposed Workbook Changes
 
 Show the user:
-1. **Proposed Ledger Rows** (`Receipt # | Date | Category | Description | Vendor | In ($) | Out ($) | Ref / Status`).
+1. **Proposed Ledger Rows** (`Receipt # | Date | Category | Description | Vendor | In ($) | Out ($) | Status (Cleared / Encumbered / Unapproved / Placeholder) | Ref`).
 2. **Before → After Dashboard Impact** for every affected category:
    - `Approved Budget (Net)`
    - `Expenses (Out)` and `Revenue & Grants (In)`
@@ -57,10 +57,10 @@ Show the user:
 
 After user approval:
 1. **Update Source Script / Workbook:**
-   - Add/update ledger rows and refresh top-line cash KPIs (`Account Balance`, `Encumbered`, `Available Cash`, `Grant Receivables`).
+   - Add/update ledger rows (including exact `Status`: `Cleared`, `Encumbered`, `Unapproved`, or `Placeholder`) and refresh top-line cash KPIs (`Account Balance`, `Pending Payments / Encumbered`, `Available Cash`, `Grant Receivables`).
    - Update version history / `Last Updated` metadata.
 2. **Regenerate & Audit:**
    - Run the workbook generator (see [scripts/generate_sample_workbook.py](./scripts/generate_sample_workbook.py) for a clean template) and [scripts/audit_ledger.py](./scripts/audit_ledger.py).
-   - Verify **zero unmapped variance** (`Dashboard Total Net Spend == Ledger Total Net Spend`) and tie net ledger spend back to opening cash + inflows - outflows - encumbrances.
+   - Verify **zero unmapped variance** (`Dashboard Net Spend == Ledger Net Spend`) and **zero bank reconciliation variance** (`Opening Cash + Cleared Inflows - Cleared Expenses == Actual Bank Balance`).
 3. **Sync Docs:**
    - Update the workspace `README.md` (if present) with the latest balances and version summary.

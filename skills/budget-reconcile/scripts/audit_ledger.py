@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Generic Budget & Ledger Audit Harness
-Validates all Ledger categories against Spending Dashboard formulas, detects
-duplicate Receipt IDs or CalLinks references, and prints a Budget vs. Actuals report.
+Validates Ledger categories and Status values against Spending Dashboard formulas,
+verifies the Bank Reconciliation tie-out, detects duplicate IDs/refs, and prints
+a Budget vs. Actuals report.
 """
 
 import argparse
@@ -12,6 +13,7 @@ import openpyxl
 
 
 DEFAULT_WORKBOOK = Path(__file__).resolve().parent.parent / "examples" / "sample_budget.xlsx"
+VALID_STATUSES = {"Cleared", "Encumbered", "Unapproved", "Placeholder"}
 
 
 def audit_workbook(path: Path) -> int:
@@ -21,7 +23,6 @@ def audit_workbook(path: Path) -> int:
     ws_bs = wb["Budget Summary"]
     ws_gala = wb["Gala Assumptions"]
 
-    # Derive valid categories dynamically from Budget Summary + indented sub-item base name
     valid_categories = set()
     budget_rows = []
     gala_tickets = float(ws_gala["C3"].value or 0) * float(ws_gala["D3"].value or 0)
@@ -70,11 +71,15 @@ def audit_workbook(path: Path) -> int:
         vendor = str(ws_led.cell(row_idx, 6).value or "")
         m_in = float(ws_led.cell(row_idx, 9).value or 0.0)
         m_out = float(ws_led.cell(row_idx, 10).value or 0.0)
-        pmt_ref = str(ws_led.cell(row_idx, 12).value or "").strip()
+        status = str(ws_led.cell(row_idx, 12).value or "").strip()
+        pmt_ref = str(ws_led.cell(row_idx, 13).value or "").strip()
 
         if rec_id in seen_ids:
             errors.append(f"Row {row_idx}: Duplicate Receipt # '{rec_id}'")
         seen_ids.add(rec_id)
+
+        if status not in VALID_STATUSES:
+            errors.append(f"Row {row_idx} ({rec_id}): Invalid Status '{status}' (expected one of {sorted(VALID_STATUSES)})")
 
         if pmt_ref.startswith("CalLinks #"):
             if pmt_ref in seen_refs:
@@ -93,16 +98,28 @@ def audit_workbook(path: Path) -> int:
             "in": m_in,
             "out": m_out,
             "net_spend": m_out - m_in,
+            "status": status,
             "pmt_ref": pmt_ref,
         })
         row_idx += 1
 
-    cal_bal = float(ws_bva["B5"].value or 0.0)
-    cal_enc = float(ws_bva["C5"].value or 0.0)
-    print("=" * 105)
+    # Bank reconciliation tie-out
+    opening_cash = float(ws_bva["C21"].value or 0.0)
+    misc_bal = float(ws_bva["B5"].value or 0.0)
+    grso_bal = float(ws_bva["G5"].value or 0.0)
+    cleared_in = sum(t["in"] for t in txns if t["status"] == "Cleared")
+    cleared_out = sum(t["out"] for t in txns if t["status"] == "Cleared")
+    encumbered_out = sum(t["out"] for t in txns if t["status"] == "Encumbered")
+    expected_cash = opening_cash + cleared_in - cleared_out
+    bank_variance = round((misc_bal + grso_bal) - expected_cash, 2)
+
+    print("=" * 116)
     print(f"BUDGET & LEDGER AUDIT REPORT ({path.name})")
-    print(f"CalLinks Account: {ws_bva['A5'].value} | Balance: ${cal_bal:,.2f} | Encumbered: ${cal_enc:,.2f} | Available: ${cal_bal + cal_enc:,.2f}")
-    print("=" * 105)
+    print(
+        f"MISC Balance: ${misc_bal:,.2f} | Encumbered: -${encumbered_out:,.2f} | "
+        f"Available: ${misc_bal - encumbered_out:,.2f} | GRSO: ${grso_bal:,.2f} | Bank Rec Variance: ${bank_variance:,.2f}"
+    )
+    print("=" * 116)
 
     tot_in = sum(t["in"] for t in txns)
     tot_out = sum(t["out"] for t in txns)
@@ -141,6 +158,8 @@ def audit_workbook(path: Path) -> int:
 
     if abs(variance) > 0.005:
         errors.append(f"Unmapped ledger variance detected: ${variance:,.2f}")
+    if abs(bank_variance) > 0.005:
+        errors.append(f"Bank reconciliation variance detected: ${bank_variance:,.2f}")
     if warnings:
         print("\nWARNINGS:")
         for w in warnings:
@@ -151,7 +170,7 @@ def audit_workbook(path: Path) -> int:
             print(f"  [X] {e}")
         return 1
 
-    print("\n[OK] AUDIT PASSED: All categories valid, zero unmapped variance.")
+    print("\n[OK] AUDIT PASSED: All categories & statuses valid, zero unmapped or bank rec variance.")
     return 0
 
 

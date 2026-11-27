@@ -1,0 +1,7 @@
+{
+  "name": "berkeley-callink-engage-finance",
+  "displayName": "Berkeley CalLink & Engage Finance",
+  "version": "1.0.0",
+  "description": "Skills and helpers for reading UC Berkeley CalLink / Anthology Engage finances and reconciling student organization budgets.",
+  "license": "MIT"
+}

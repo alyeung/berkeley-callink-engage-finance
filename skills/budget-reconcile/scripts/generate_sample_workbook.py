@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Generate an anonymized sample Student Organization Budget & Expense Tracker
-(`sample_budget.xlsx`) with Cover, Spending Dashboard, Budget Summary, Ledger,
+(`sample_budget.xlsx`) with Cover, Spending Dashboard (including built-in Bank Rec),
+Budget Summary, Ledger (with Cleared/Encumbered/Unapproved/Placeholder Status),
 and Gala Assumptions tabs.
 """
 
@@ -9,6 +10,7 @@ from pathlib import Path
 import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
 
 
 DEFAULT_OUT = Path(__file__).resolve().parent.parent / "examples" / "sample_budget.xlsx"
@@ -47,6 +49,10 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
     fmt_curr = "$#,##0.00;($#,##0.00);\"-\""
     fmt_int = "#,##0"
 
+    opening_cash = 10000.00
+    misc_balance = 12200.00
+    grso_balance = 1200.00
+
     # Generic Line Items:
     # (Name, Owner, Ticket Rev, Sponsor Grant, GA/Gov Grant, Gross Budget, Notes)
     line_items = [
@@ -60,14 +66,16 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
         ("Operations & Admin", "VP Finance & President", 0, 0, 0, -1000, "Board logistics, software, and supplies"),
     ]
 
-    # Sample Ledger Rows
+    # Sample Ledger Rows:
+    # (Rec#, Date, Category, Event, Desc, Vendor, Owner, Approver, In, Out, Status, Ref, Notes)
+    # Math tie-out: Opening $10,000 + Cleared In ($5,350) - Cleared Out ($1,950) = $13,400 ($12,200 MISC + $1,200 GRSO)
     sample_txns = [
-        ("REC-001", "2026-08-18", "Signature Events", "Welcome Mixer", "Catering & Snacks", "Local Caterer", "VP of Events", "Treasurer", 0.00, 1200.00, "CalLinks #1001001", "Paid via CalLinks"),
-        ("REC-002", "2026-08-25", "Signature Events", "Welcome Mixer", "Student Government Grant Received", "Student Government", "VP of Events", "Treasurer", 1000.00, 0.00, "GA GRSO (200001)", "Summer grant allocation"),
-        ("REC-003", "2026-09-12", "Social Events", "Fall Mixer", "Fall Kickoff Mixer", "Neighborhood Cafe", "VP of Social", "Treasurer", 0.00, 350.00, "CalLinks #1001042", "Paid via CalLinks"),
-        ("REC-004", "2026-09-20", "Spring Gala", "Spring Gala", "Gala Venue Deposit", "Civic Ballroom", "VP of Social", "Treasurer", 0.00, 2500.00, "CalLinks #1001088", "Approved / Encumbered"),
-        ("REC-005", "2026-10-05", "Spring Gala", "Spring Gala", "Gala Ticket Sales (Stripe Net)", "Stripe (Tickets)", "VP of Social", "Treasurer", 4350.00, 0.00, "Stripe Net Payouts", "60 tickets cleared in MISC"),
-        ("REC-006", "2026-10-12", "Campus Sponsor Grant (Pass-Through)", "Sponsor Dinner", "Department Welcome Dinner", "Campus Dining", "Campus Sponsor", "Treasurer", 0.00, 400.00, "CalLinks #1001105", "Paid; awaiting sponsor reimbursement"),
+        ("REC-001", "2026-08-18", "Signature Events", "Welcome Mixer", "Catering & Snacks", "Local Caterer", "VP of Events", "Treasurer", 0.00, 1200.00, "Cleared", "CalLinks #1001001", "Paid via CalLinks"),
+        ("REC-002", "2026-08-25", "Signature Events", "Welcome Mixer", "Student Government Grant Received", "Student Government", "VP of Events", "Treasurer", 1000.00, 0.00, "Cleared", "GA GRSO (200001)", "Summer grant allocation"),
+        ("REC-003", "2026-09-12", "Social Events", "Fall Mixer", "Fall Kickoff Mixer", "Neighborhood Cafe", "VP of Social", "Treasurer", 0.00, 350.00, "Cleared", "CalLinks #1001042", "Paid via CalLinks"),
+        ("REC-004", "2026-09-20", "Spring Gala", "Spring Gala", "Gala Venue Deposit", "Civic Ballroom", "VP of Social", "Treasurer", 0.00, 2500.00, "Encumbered", "CalLinks #1001088", "Approved; waiting for check/ACH payout"),
+        ("REC-005", "2026-10-05", "Spring Gala", "Spring Gala", "Gala Ticket Sales (Stripe Net)", "Stripe (Tickets)", "VP of Social", "Treasurer", 4350.00, 0.00, "Cleared", "Stripe Net Payouts", "60 tickets cleared in MISC ($4,500 gross less ~$150 fees)"),
+        ("REC-006", "2026-10-12", "Campus Sponsor Grant (Pass-Through)", "Sponsor Dinner", "Department Welcome Dinner", "Campus Dining", "Campus Sponsor", "Treasurer", 0.00, 400.00, "Cleared", "CalLinks #1001105", "Paid; awaiting campus sponsor reimbursement"),
     ]
 
     # ==========================================
@@ -91,7 +99,7 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
     meta = [
         ("Organization:", "Example Student Association"),
         ("Account Slug / ID:", "<org_slug> / <account_id>"),
-        ("Starting Bank Balance:", "$10,000.00 (Opening CalLinks MISC cash)"),
+        ("Opening Bank Balance:", "$10,000.00 (Start-of-year CalLinks cash)"),
         ("Budgeted Net Spend:", "-$8,500.00 (Planned draw from reserves)"),
         ("Last Updated:", "Sample Template"),
     ]
@@ -108,10 +116,10 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
     ws_cov.row_dimensions[10].height = 22
 
     toc = [
-        ("Spending Dashboard", "Budget vs. actual spending, ticket and grant inflows, and CalLinks cash."),
+        ("Spending Dashboard", "Budget vs. actual spending, cash balances, and automatic bank reconciliation."),
         ("Budget Summary", "Approved annual budget by event and portfolio owner."),
-        ("Ledger", "Itemized log of receipts, invoices, ticket payouts, and grants."),
-        ("Gala Assumptions", "Ticket pricing model, Gala budget vs. actuals, and remaining ticket forecast."),
+        ("Ledger", "Itemized log of receipts, ticket sales, grants, and Status (Cleared / Encumbered / Unapproved / Placeholder)."),
+        ("Gala Assumptions", "Ticket pricing model and Gala budget vs. actuals."),
     ]
     for i, (tab, desc) in enumerate(toc, start=11):
         ws_cov.row_dimensions[i].height = 20
@@ -171,7 +179,6 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
         for c_i in range(1, 10):
             ws_bs.cell(idx, c_i).border = b_thin
 
-    # Row 12: Operating Subtotal (excludes Row 6 sub-item)
     ws_bs.row_dimensions[12].height = 22
     ws_bs.cell(12, 1, "Operating Subtotal").font = f_bold
     ws_bs.cell(12, 2, "All Portfolios").font = f_bold
@@ -185,7 +192,6 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
         ws_bs.cell(12, c_i).fill = fill_thdr
         ws_bs.cell(12, c_i).border = b_tot
 
-    # Row 13: Pass-Through Sponsor Grant
     ws_bs.row_dimensions[13].height = 20
     ws_bs.cell(13, 1, "Campus Sponsor Grant (Pass-Through)").font = f_bold
     ws_bs.cell(13, 2, "Campus Sponsor").font = f_data
@@ -196,7 +202,6 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
     for c_i in range(1, 10):
         ws_bs.cell(13, c_i).border = b_thin
 
-    # Row 14: Total Budget
     ws_bs.row_dimensions[14].height = 24
     ws_bs.cell(14, 1, "TOTAL BUDGET (Net Reserve Spend)").font = Font(name="Calibri", size=10, bold=True, color="FFFFFF")
     ws_bs.cell(14, 2, "Total from Bank").font = Font(name="Calibri", size=10, bold=True, color="FFFFFF")
@@ -214,7 +219,7 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
         ws_bs.column_dimensions[col].width = w
 
     # ==========================================
-    # 3. Spending Dashboard (8-Column Executive View)
+    # 3. Spending Dashboard (8-Column Executive View + Bank Rec)
     # ==========================================
     ws_bva = wb.create_sheet("Spending Dashboard")
     ws_bva.merge_cells("A1:H1")
@@ -223,7 +228,7 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
     ws_bva["A1"].fill = fill_navy
     ws_bva["A1"].alignment = Alignment(horizontal="left", vertical="center", indent=1)
     ws_bva.merge_cells("A2:H2")
-    ws_bva["A2"] = "Approved budgets vs. actual spending and current CalLinks cash balances."
+    ws_bva["A2"] = "Approved budgets vs. actual spending, current CalLinks cash, and bank reconciliation."
     ws_bva["A2"].font = f_sub
     ws_bva["A2"].fill = fill_navy
     ws_bva["A2"].alignment = Alignment(horizontal="left", vertical="center", indent=1)
@@ -232,12 +237,12 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
 
     kpis = [
         ("CalLinks Account", "4-XX-XXXXXX (MISC)", None),
-        ("Account Balance", 12450.00, fmt_curr),
-        ("Pending Payments (Encumbered)", -2500.00, fmt_curr),
+        ("Account Balance", misc_balance, fmt_curr),
+        ("Pending Payments (Encumbered)", "=-SUMIFS(Ledger!J:J, Ledger!L:L, \"Encumbered\")", fmt_curr),
         ("Available Cash", "=B5+C5", fmt_curr),
         ("Campus Grant Receivable", "=F17", fmt_curr),
         ("Cash After Receivables", "=D5+E5", fmt_curr),
-        ("GA Grant Account (GRSO)", 1200.00, fmt_curr),
+        ("GA Grant Account (GRSO)", grso_balance, fmt_curr),
         ("Total Available Cash", "=F5+G5", fmt_curr),
     ]
     ws_bva.row_dimensions[4].height = 24
@@ -251,7 +256,7 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
             c_val.number_format = nfmt
 
     ws_bva.merge_cells("A6:H6")
-    ws_bva["A6"] = "Sample snapshot: $12,450.00 MISC balance minus $2,500.00 encumbered = $9,950.00 available (+ $400.00 sponsor receivable + $1,200.00 GA grant account)."
+    ws_bva["A6"] = "Sample snapshot: $12,200.00 MISC balance minus $2,500.00 pending payments = $9,700.00 available (+ $400.00 sponsor receivable + $1,200.00 GA grant account)."
     ws_bva["A6"].font = Font(name="Calibri", size=9, italic=True, color="57606A")
 
     bva_headers = [
@@ -276,10 +281,10 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
         ws_bva.cell(idx, 2, f"='Budget Summary'!B{bs_row}").font = f_data
         ws_bva.cell(idx, 3, f"=-'Budget Summary'!I{bs_row}").number_format = fmt_curr
 
-        if idx == 9:  # Social Events (rolls up Gala)
+        if idx == 9:
             ws_bva.cell(idx, 4, "=SUMIFS(Ledger!J:J, Ledger!C:C, \"*Social*\")+SUMIFS(Ledger!J:J, Ledger!C:C, \"*Gala*\")")
             ws_bva.cell(idx, 5, "=SUMIFS(Ledger!I:I, Ledger!C:C, \"*Social*\")+SUMIFS(Ledger!I:I, Ledger!C:C, \"*Gala*\")")
-        elif idx == 10:  # Spring Gala sub-item
+        elif idx == 10:
             ws_bva.cell(idx, 4, "=SUMIFS(Ledger!J:J, Ledger!C:C, \"*Gala*\")")
             ws_bva.cell(idx, 5, "=SUMIFS(Ledger!I:I, Ledger!C:C, \"*Gala*\")")
         else:
@@ -343,14 +348,45 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
         ws_bva.cell(18, c_i).fill = fill_navy
         ws_bva.cell(18, c_i).border = b_tot
 
-    for col, w in [("A", 36), ("B", 22), ("C", 24), ("D", 18), ("E", 22), ("F", 18), ("G", 20), ("H", 24)]:
+    # Rows 20-26: Built-In Bank Reconciliation Tie-Out
+    ws_bva.merge_cells("A20:D20")
+    ws_bva["A20"] = "BANK RECONCILIATION (CASH TIE-OUT)"
+    ws_bva["A20"].font = f_sec
+    ws_bva["A20"].fill = fill_accent
+    ws_bva["A20"].alignment = Alignment(horizontal="left", vertical="center", indent=1)
+    ws_bva.row_dimensions[20].height = 22
+
+    rec_rows = [
+        ("Opening Cash (Start of Year)", opening_cash, "Entered from prior-year closing balance", False),
+        ("Plus: Cleared Inflows (Status = Cleared)", "=SUMIFS(Ledger!I:I, Ledger!L:L, \"Cleared\")", "Ticket payouts & grants deposited into CalLinks", False),
+        ("Less: Cleared Expenses (Status = Cleared)", "=-SUMIFS(Ledger!J:J, Ledger!L:L, \"Cleared\")", "Payments that have already left CalLinks", False),
+        ("Expected Combined Bank Balance (MISC + GRSO)", "=SUM(C21:C23)", "Should equal MISC Balance (B5) + GRSO Balance (G5)", True),
+        ("Actual CalLinks Balance (MISC + GRSO)", "=B5+G5", "Live total from CalLinks Accounts page", False),
+        ("Bank Reconciliation Variance", "=C25-C24", "Must be $0.00 (any gap means a missing cleared row)", True),
+    ]
+    for offset, (lbl, val, note, is_tot) in enumerate(rec_rows, start=21):
+        ws_bva.row_dimensions[offset].height = 20
+        ws_bva.merge_cells(f"A{offset}:B{offset}")
+        c_l = ws_bva.cell(offset, 1, lbl)
+        c_l.font = f_bold if is_tot else f_data
+        c_v = ws_bva.cell(offset, 3, val)
+        c_v.number_format = fmt_curr
+        c_v.font = f_bold if is_tot else f_data
+        c_n = ws_bva.cell(offset, 4, note)
+        c_n.font = Font(name="Calibri", size=9, italic=True, color="57606A")
+        for c_i in range(1, 5):
+            ws_bva.cell(offset, c_i).border = b_tot if is_tot else b_thin
+            if is_tot:
+                ws_bva.cell(offset, c_i).fill = fill_hi if offset == 26 else fill_thdr
+
+    for col, w in [("A", 36), ("B", 22), ("C", 24), ("D", 22), ("E", 22), ("F", 18), ("G", 20), ("H", 24)]:
         ws_bva.column_dimensions[col].width = w
 
     # ==========================================
-    # 4. Ledger
+    # 4. Ledger (with Status column L)
     # ==========================================
     ws_led = wb.create_sheet("Ledger")
-    ws_led.merge_cells("A1:M1")
+    ws_led.merge_cells("A1:N1")
     ws_led["A1"] = "Transaction Ledger (AY 2026–2027)"
     ws_led["A1"].font = f_title
     ws_led["A1"].fill = fill_navy
@@ -360,7 +396,7 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
     led_headers = [
         "Receipt #", "Date", "Budget Category", "Event / Format", "Item Description",
         "Vendor / Payee", "Portfolio Owner", "Approved By", "Money In (Tickets/Grants)",
-        "Money Out (Expenses)", "Net Amount", "CalLinks # / Method", "Notes & Status"
+        "Money Out (Expenses)", "Net Amount", "Status", "CalLinks # / Method", "Notes"
     ]
     ws_led.row_dimensions[4].height = 24
     for c_i, h in enumerate(led_headers, 1):
@@ -369,6 +405,9 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
         c.fill = fill_thdr
         c.border = b_thin
         c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    dv_status = DataValidation(type="list", formula1='"Cleared,Encumbered,Unapproved,Placeholder"', allow_blank=False)
+    ws_led.add_data_validation(dv_status)
 
     for idx, row_t in enumerate(sample_txns, start=5):
         ws_led.row_dimensions[idx].height = 20
@@ -381,9 +420,13 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
         c_net = ws_led.cell(idx, 11, f"=I{idx}-J{idx}")
         c_net.number_format = fmt_curr
         c_net.alignment = Alignment(horizontal="right")
-        ws_led.cell(idx, 12, row_t[10]).font = f_data
+        c_st = ws_led.cell(idx, 12, row_t[10])
+        c_st.font = f_bold
+        c_st.alignment = Alignment(horizontal="center")
+        dv_status.add(c_st)
         ws_led.cell(idx, 13, row_t[11]).font = f_data
-        for c_i in range(1, 14):
+        ws_led.cell(idx, 14, row_t[12]).font = f_data
+        for c_i in range(1, 15):
             ws_led.cell(idx, c_i).border = b_thin
 
     tot_r = 5 + len(sample_txns)
@@ -394,11 +437,11 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
         c = ws_led.cell(tot_r, c_i, f"=SUM({col}5:{col}{tot_r-1})")
         c.font = f_bold
         c.number_format = fmt_curr
-    for c_i in range(1, 14):
+    for c_i in range(1, 15):
         ws_led.cell(tot_r, c_i).fill = fill_thdr
         ws_led.cell(tot_r, c_i).border = b_tot
 
-    for col, w in [("A", 12), ("B", 12), ("C", 34), ("D", 16), ("E", 32), ("F", 22), ("G", 18), ("H", 14), ("I", 18), ("J", 18), ("K", 16), ("L", 20), ("M", 34)]:
+    for col, w in [("A", 12), ("B", 12), ("C", 34), ("D", 16), ("E", 32), ("F", 22), ("G", 18), ("H", 14), ("I", 18), ("J", 18), ("K", 16), ("L", 14), ("M", 20), ("N", 34)]:
         ws_led.column_dimensions[col].width = w
 
     # ==========================================
@@ -458,7 +501,6 @@ def build_sample_workbook(output_path: Path = DEFAULT_OUT) -> None:
     for col, w in [("A", 4), ("B", 38), ("C", 20), ("D", 22), ("E", 22)]:
         ws_gala.column_dimensions[col].width = w
 
-    # Tab Order: Cover, Spending Dashboard, Budget Summary, Ledger, Gala Assumptions
     wb._sheets = [wb["Cover"], wb["Spending Dashboard"], wb["Budget Summary"], wb["Ledger"], wb["Gala Assumptions"]]
     output_path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(output_path)
