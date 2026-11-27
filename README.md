@@ -1,6 +1,8 @@
 # Berkeley CalLink & Anthology Engage Finance Skills
 
-AI agent skills for extracting, auditing, and reconciling student organization finances on **UC Berkeley CalLink** (and other **Anthology / CampusLabs Engage** campuses).
+Open-standard **Agent Skills** (`SKILL.md`) and Python helpers for extracting, auditing, and reconciling student organization finances on **UC Berkeley CalLink** (and other **Anthology / CampusLabs Engage** campuses).
+
+Works with any agent supporting `SKILL.md` and/or MCP (Claude Code, Codex, Cursor, Gemini CLI, Antigravity, etc.), or standalone via the included Python scripts.
 
 ---
 
@@ -20,27 +22,29 @@ Keeping them separate lets any organization use `callink-finance` standalone (re
 CalLink sits behind **UC Berkeley CalNet SSO + Duo 2FA**. These skills:
 * **Never** store passwords, cookies, or tokens.
 * **Never** attempt to bypass authentication.
-* Read from a browser session **you** already signed into (or from screenshots, PDFs, or CSV exports you drop into chat).
+* Read from a browser session **you** already signed into (or from screenshots, PDFs, or CSV exports you share in chat).
 
 ---
 
 ## Quick Start
 
 ### 1. Install the Skills
-Copy (or symlink) one or both skill folders into your Antigravity global skills directory (`~/.gemini/config/skills/`) or a project's `.agents/skills/` directory:
+Copy or symlink `skills/*` into your preferred agent's skills directory (project-local `.agents/skills/` works across most tools):
 
 ```bash
-# Option A: Symlink globally (recommended if contributing back to this repo)
-ln -s /path/to/berkeley-callink-engage-finance/skills/callink-finance ~/.gemini/config/skills/callink-finance
-ln -s /path/to/berkeley-callink-engage-finance/skills/budget-reconcile ~/.gemini/config/skills/budget-reconcile
-
-# Option B: Copy into a private org budget repo
+# Project-local (works in any repo across Antigravity, Codex, Cursor, etc.)
 cp -r skills/* /path/to/your-private-budget-repo/.agents/skills/
+
+# Global examples (choose your client):
+# Claude Code:
+ln -s /path/to/berkeley-callink-engage-finance/skills/callink-finance ~/.claude/skills/callink-finance
+# Antigravity / Gemini:
+ln -s /path/to/berkeley-callink-engage-finance/skills/callink-finance ~/.gemini/config/skills/callink-finance
 ```
 
-### 2. Enable Live Chrome Reading (Optional, Recommended)
-To let the agent read CalLink tabs you already logged into via Chrome:
-1. Add `chrome-devtools-mcp` with `--autoConnect` to `~/.gemini/config/mcp_config.json`:
+### 2. Enable Live Chrome Reading (Optional, via MCP)
+To let your AI client read CalLink tabs you already logged into via Chrome:
+1. Add [`chrome-devtools-mcp`](https://github.com/ChromeDevTools/chrome-devtools-mcp) with `--autoConnect` to your client's MCP config (e.g., `.mcp.json`, `~/.claude.json`, or `~/.gemini/config/mcp_config.json`):
    ```json
    {
      "mcpServers": {
@@ -52,9 +56,22 @@ To let the agent read CalLink tabs you already logged into via Chrome:
    }
    ```
 2. In Chrome (144+), open `chrome://inspect/#remote-debugging` and check **Enable remote debugging**.
-3. Sign into CalLink in Chrome, refresh MCP servers in Antigravity, and run `/callink-finance`.
+3. Sign into CalLink in Chrome, reload MCP servers in your client, and ask it to pull and reconcile your CalLink account.
 
 *(No browser MCP? Drop a screenshot, CSV, or copy-pasted table from CalLink into chat and `parse_callink_export.py` will normalize it offline.)*
+
+---
+
+## Standalone Python Scripts (No AI Client Required)
+
+```bash
+# Normalize a CalLink CSV/TSV export into Markdown or JSON
+python3 skills/callink-finance/scripts/parse_callink_export.py export.csv --format markdown
+
+# Generate and audit the anonymized sample workbook
+python3 skills/budget-reconcile/scripts/generate_sample_workbook.py
+python3 skills/budget-reconcile/scripts/audit_ledger.py
+```
 
 ---
 
