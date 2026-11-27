@@ -62,6 +62,28 @@ To let your AI client read CalLink tabs you already logged into via Chrome:
 
 ---
 
+## How to Use the Skills
+
+Once installed (or opened directly inside this repo), your AI agent automatically loads the matching skill when you ask about CalLink or budget reconciliation — or you can invoke it explicitly (e.g., `/callink-finance` or `/budget-reconcile` in clients that support slash commands).
+
+### Typical Workflow
+1. **Sign into CalLink** in Chrome (or export/screenshot your **Account Transactions** and **Purchase Requests** tabs).
+2. **Prompt your agent** using one of the examples below.
+3. **Confirm categories:** The agent will never silently rewrite your spreadsheet — it diffs new activity, flags unapproved requests or pending reimbursements, and asks you to confirm categories and dashboard impact first.
+4. **Verify:** After updating your workbook, the agent runs `audit_ledger.py` to confirm `$0.00` unmapped variance.
+
+### Example Prompts
+* **Quick cash & encumbrance check (`callink-finance`):**
+  > "Pull CalLink for org `<org_slug>` account `<account_id>`. Show our current balance, what's encumbered, any unapproved requests, and net ticket payouts."
+* **Full budget reconciliation (`callink-finance` + `budget-reconcile`):**
+  > "Check CalLink for new transactions and ticket deposits since our last update, suggest budget categories, and update our budget workbook."
+* **Offline CSV or screenshot (`callink-finance`):**
+  > "Here is a CSV export / screenshot of our CalLink transactions. Parse it and show what changed compared to our ledger."
+* **Test safely with the sample workbook:**
+  > "Run `audit_ledger.py` on `skills/budget-reconcile/examples/sample_budget.xlsx` and walk me through logging a $250 mixer expense."
+
+---
+
 ## Standalone Python Scripts (No AI Client Required)
 
 ```bash
