@@ -1,6 +1,6 @@
 # Berkeley CalLink & Engage Finance Skills
 
-Plain-English AI instructions (`SKILL.md`) and spreadsheet tools for checking UC Berkeley CalLink balances, tracking ticket sales and grants, and keeping a club budget up to date.
+Track spending for impact, prevent reconciliation mistakes, and account for every dollar in minutes. The UC Berkeley Haas Evening and Weekend MBA Association VP of Finance uses this system to manage annual budgets, grants, and event P&L.
 
 Works with Claude Code, Codex, Cursor, Gemini CLI, Antigravity, or standalone Python.
 
