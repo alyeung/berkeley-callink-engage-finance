@@ -2,6 +2,6 @@
   "name": "berkeley-callink-engage-finance",
   "displayName": "Berkeley CalLink & Engage Finance",
   "version": "1.0.0",
-  "description": "Skills and helpers for reading UC Berkeley CalLink / Anthology Engage finances and reconciling student organization budgets.",
+  "description": "Track spending for impact, prevent reconciliation mistakes, and account for every dollar in minutes. The UC Berkeley Haas Evening and Weekend MBA Association VP of Finance uses this system to manage annual budgets, grants, and event P&L.",
   "license": "MIT"
 }
