@@ -1,0 +1,28 @@
+name: Privacy & Skill Checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run public repo privacy check
+        run: python3 scripts/check_privacy.py
+      - name: Test CalLink export parser
+        run: |
+          printf "Date,Request #,Payee,Description,Status,Amount\n2026-11-05,1234567,Example Caterer,Deposit,Approved,-500.00\n" \
+            | python3 skills/callink-finance/scripts/parse_callink_export.py --format json
+      - name: Install dependencies
+        run: pip install openpyxl
+      - name: Rebuild and audit sample budget workbook
+        run: |
+          python3 skills/budget-reconcile/scripts/generate_sample_workbook.py
+          python3 skills/budget-reconcile/scripts/audit_ledger.py
