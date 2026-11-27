@@ -12,8 +12,9 @@ npx skills add alyeung/berkeley-callink-engage-finance
 
 *(Prefer manual install? Download the ZIP or `git clone` into your private repo's `.agents/skills/` folder.)*
 
-Drop a CalLink Account or Purchase Requests screenshot (or CSV) into chat and ask:
+Drop a CalLink Account or Purchase Requests screenshot (or a student's reimbursement email + PDF) into chat and ask:
 * *"How much cash is actually left after pending payments, and what came in from tickets and grants?"*
+* *"Check this reimbursement packet, shrink the PDF under 4 MB if needed, and pre-fill my CalLink Purchase Request before I submit."*
 * *"Compare these CalLink rows to our Excel budget, suggest categories, and preview changes before editing."*
 * *"Walk me through adding a $250 mixer expense to `skills/budget-reconcile/examples/sample_budget.xlsx`."*
 
@@ -33,6 +34,7 @@ Separates **Expenses (Out)**, **Revenue & Grants (In)**, and **Net Spent** while
 | Skill | Purpose |
 | :--- | :--- |
 | [`skills/callink-finance`](skills/callink-finance/SKILL.md) | Reads CalLink balances, holds, ticket sales, grants, and recent expenses from screenshots, CSVs, or a live Chrome tab. |
+| [`skills/callink-purchase-request`](skills/callink-purchase-request/SKILL.md) | Validates student reimbursement packets and pre-fills the CalLink Create Purchase Request form, pausing before Submit. |
 | [`skills/budget-reconcile`](skills/budget-reconcile/SKILL.md) | Maps CalLink activity to Excel categories, tracks `Cleared`/`Encumbered`/`Unapproved` status, and runs a `$0.00` variance check. |
 
 ## Security & Privacy
