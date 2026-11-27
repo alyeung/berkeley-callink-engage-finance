@@ -10,7 +10,13 @@ Works with any AI coding assistant that supports `SKILL.md` (Claude Code, Codex,
 
 You do **not** need Node.js, Chrome debugging, or terminal scripts to try this:
 
-1. **Copy `skills/` into your project's `.agents/skills/` folder** (or open this folder in your AI assistant).
+1. **Get the skills from GitHub:**
+   * **Easiest (no Git):** Click **Code → Download ZIP** on [github.com/alyeung/berkeley-callink-engage-finance](https://github.com/alyeung/berkeley-callink-engage-finance), unzip it, and either open that folder in your AI assistant or copy its `skills/` folder into your club budget folder's `.agents/skills/`.
+   * **Or via terminal (`git clone`):**
+     ```bash
+     git clone https://github.com/alyeung/berkeley-callink-engage-finance.git
+     cp -r berkeley-callink-engage-finance/skills/* /path/to/your-private-budget-repo/.agents/skills/
+     ```
 2. **Take a screenshot or export a CSV** from your CalLink Account page (and Purchase Requests page).
 3. **Drop it into chat** and ask in plain English:
    * *"Here's a screenshot from CalLink. How much money do we actually have left after pending payments, and how much came in from tickets and grants?"*
