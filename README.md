@@ -93,3 +93,9 @@ python3 skills/budget-reconcile/scripts/audit_ledger.py
 ## Keep Your Club's Real Data Private
 
 Keep your real spreadsheets, contracts, org name, and account numbers in a **private** repository. Just mention your CalLink URL or account number in your private repo's `README.md` so the skill knows which account to check.
+
+This repo includes [AGENTS.md](AGENTS.md) guardrails (login safety, confirm before editing, plain-language communication) and a privacy check script you can run before pushing:
+
+```bash
+python3 scripts/check_privacy.py
+```
